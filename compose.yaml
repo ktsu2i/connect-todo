@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./api:/app
+    environment:
+      - TODO_SERVER_ADDR=:8081
+      - TODO_DATABASE_URL=postgres://todo_user:todo_password@db:5432/todo_app?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: todo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
