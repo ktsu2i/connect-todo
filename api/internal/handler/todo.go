@@ -81,15 +81,19 @@ func (h *TodoHandler) UpdateTodo(
 	ctx context.Context,
 	req *connect.Request[v1.UpdateTodoRequest],
 ) (*connect.Response[v1.UpdateTodoResponse], error) {
-	now := timestamppb.New(time.Now())
+	todo, err := h.uc.Update(
+		req.Msg.GetId(),
+		req.Msg.GetTitle(),
+		req.Msg.GetDone(),
+	)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if todo == nil {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("todo not found"))
+	}
 	resp := &v1.UpdateTodoResponse{
-		Todo: &v1.Todo{
-			Id:        req.Msg.GetId(),
-			Title:     req.Msg.GetTitle(),
-			Done:      req.Msg.GetDone(),
-			CreatedAt: now,
-			UpdatedAt: now,
-		},
+		Todo: todoToProto(todo),
 	}
 	return connect.NewResponse(resp), nil
 }
