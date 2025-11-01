@@ -2,20 +2,25 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	connect "connectrpc.com/connect"
 	v1 "github.com/ktsu2i/connect-todo/api/gen/todo/v1"
 	"github.com/ktsu2i/connect-todo/api/gen/todo/v1/todov1connect"
+	"github.com/ktsu2i/connect-todo/api/internal/model"
+	"github.com/ktsu2i/connect-todo/api/internal/usecase"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type TodoHandler struct{}
+type TodoHandler struct {
+	uc usecase.ITodoUsecase
+}
 
 var _ todov1connect.TodoServiceHandler = (*TodoHandler)(nil)
 
-func NewTodoHandler() *TodoHandler {
-	return &TodoHandler{}
+func NewTodoHandler(uc usecase.ITodoUsecase) *TodoHandler {
+	return &TodoHandler{uc: uc}
 }
 
 func (h *TodoHandler) ListTodos(
@@ -58,15 +63,16 @@ func (h *TodoHandler) CreateTodo(
 	ctx context.Context,
 	req *connect.Request[v1.CreateTodoRequest],
 ) (*connect.Response[v1.CreateTodoResponse], error) {
-	now := timestamppb.New(time.Now())
+	todo, err := h.uc.Create(req.Msg.GetTitle())
+	if err != nil {
+		if errors.Is(err, usecase.ErrEmptyTitle) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
 	resp := &v1.CreateTodoResponse{
-		Todo: &v1.Todo{
-			Id:        42,
-			Title:     req.Msg.GetTitle(),
-			Done:      false,
-			CreatedAt: now,
-			UpdatedAt: now,
-		},
+		Todo: todoToProto(todo),
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -93,4 +99,17 @@ func (h *TodoHandler) DeleteTodo(
 	_ *connect.Request[v1.DeleteTodoRequest],
 ) (*connect.Response[v1.DeleteTodoResponse], error) {
 	return connect.NewResponse(&v1.DeleteTodoResponse{}), nil
+}
+
+func todoToProto(todo *model.Todo) *v1.Todo {
+	if todo == nil {
+		return nil
+	}
+	return &v1.Todo{
+		Id:        todo.ID,
+		Title:     todo.Title,
+		Done:      todo.Done,
+		CreatedAt: timestamppb.New(todo.CreatedAt),
+		UpdatedAt: timestamppb.New(todo.UpdatedAt),
+	}
 }

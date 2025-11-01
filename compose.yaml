@@ -8,7 +8,7 @@ services:
       - ./api:/app
     environment:
       - TODO_SERVER_ADDR=:8081
-      - TODO_DATABASE_URL=postgres://todo_user:todo_password@db:5432/todo_app?sslmode=disable
+      - TODO_DATABASE_URL=postgres://admin:admin@postgres:5432/todo?sslmode=disable
     ports:
       - "8081:8081"
     depends_on:
