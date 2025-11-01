@@ -37,15 +37,17 @@ jobs:
       - name: Analyze HEAD
         run: |
           set -e
-          capslock -packages=./... -output=json > head.json || { echo "capslock failed on HEAD"; exit 1; }
+          pushd api >/dev/null
+          capslock -packages=./... -output=json > ../head.json || { echo "capslock failed on HEAD"; exit 1; }
+          popd >/dev/null
           jq '.[0]?' head.json >/dev/null 2>&1 || echo "::warning ::HEAD capslock JSON looks empty or unexpected"
 
       - name: Analyze BASE
         run: |
           set -e
-          pushd base >/dev/null
-          capslock -packages=./... -output=json > ../base.json || { echo "capslock failed on BASE"; exit 1; }
-          popd
+          pushd base/api >/dev/null
+          capslock -packages=./... -output=json > ../../base.json || { echo "capslock failed on BASE"; exit 1; }
+          popd >/dev/null
           jq '.[0]?' base.json >/dev/null 2>&1 || echo "::warning ::BASE capslock JSON looks empty or unexpected"
 
       # ---- Summarize counts per capability (HEAD / BASE) ----
