@@ -113,8 +113,8 @@ jobs:
             echo "<!-- capslock-cap-diff -->"
             echo "**Capslock capability counts (per package graph)**"
             echo ""
-            echo "- Base: \`${{ github.event.pull_request.base.sha }}\`"
-            echo "- Head: \`${{ github.sha }}\`"
+            echo "- Base: \`${{ github.event.repository.default_branch }}\`"
+            echo "- Head: \`${{ github.event.pull_request.head.ref }}\`"
             echo ""
             cat body_part.md
             echo ""
