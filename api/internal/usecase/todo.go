@@ -10,6 +10,7 @@ import (
 var ErrEmptyTitle = errors.New("title must not be empty")
 
 type ITodoUsecase interface {
+	Todo(id int64) (*model.Todo, error)
 	Create(title string) (*model.Todo, error)
 	Update(id int64, title string, done bool) (*model.Todo, error)
 }
@@ -20,6 +21,17 @@ type todoUsecase struct {
 
 func NewTodoUsecase(repo repo.ITodoRepo) ITodoUsecase {
 	return &todoUsecase{repo: repo}
+}
+
+func (uc *todoUsecase) Todo(id int64) (*model.Todo, error) {
+	todo, err := uc.repo.Todo(id)
+	if err != nil {
+		return nil, err
+	}
+	if todo == nil {
+		return nil, nil
+	}
+	return todo, nil
 }
 
 func (uc *todoUsecase) Create(title string) (*model.Todo, error) {

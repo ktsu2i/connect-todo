@@ -94,7 +94,10 @@ jobs:
         id: render
         run: |
           # 変化行（delta != 0）のテーブルを作る。行が無ければ一言でOK
-          jq -r '
+          BASE_BRANCH="${{ github.event.repository.default_branch }}"
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+
+          jq -r --arg base_branch "$BASE_BRANCH" --arg head_branch "$HEAD_BRANCH" '
             def sign(n): if n>0 then "+" + (n|tostring) else (n|tostring) end;
             . as $rows
             | ([$rows[] | select(.delta!=0)] | length) as $n
@@ -102,7 +105,7 @@ jobs:
                 "No capability count changes detected."
               else
                 "### Capslock capability diff\n\n" +
-                "| Capability | base | head | Δ |\n|---|---:|---:|---:|\n" +
+                "| Capability | \($base_branch) | \($head_branch) | Δ |\n|---|---:|---:|---:|\n" +
                 ([$rows[] | select(.delta!=0)
                   | "| \(.capability) | \(.base) | \(.head) | " + sign(.delta) + " |"
                  ] | join("\n"))
@@ -113,8 +116,8 @@ jobs:
             echo "<!-- capslock-cap-diff -->"
             echo "**Capslock capability counts (per package graph)**"
             echo ""
-            echo "- Base: \`${{ github.event.pull_request.base.sha }}\`"
-            echo "- Head: \`${{ github.sha }}\`"
+            echo "- Base: \`${{ github.event.repository.default_branch }}\`"
+            echo "- Head: \`${{ github.event.pull_request.head.ref }}\`"
             echo ""
             cat body_part.md
             echo ""

@@ -8,6 +8,7 @@ import (
 )
 
 type ITodoRepo interface {
+	Todo(id int64) (*model.Todo, error)
 	Create(title string) (*model.Todo, error)
 	Update(id int64, title string, done bool) (*model.Todo, error)
 }
@@ -18,6 +19,17 @@ type TodoRepo struct {
 
 func NewTodoRepository(db *gorm.DB) *TodoRepo {
 	return &TodoRepo{db: db}
+}
+
+func (r *TodoRepo) Todo(id int64) (*model.Todo, error) {
+	var todo model.Todo
+	if err := r.db.Where("id = ?", id).First(&todo).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &todo, nil
 }
 
 func (r *TodoRepo) Create(title string) (*model.Todo, error) {
