@@ -138,21 +138,40 @@ jobs:
             const marker = '<!-- capslock-cap-diff -->';
             const body   = process.env.BODY;
 
-            // find existing comment
-            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: number, per_page: 100 });
-            const mine = comments.find(c => c.body && c.body.includes(marker));
+            // Minimize existing capslock comments so the timeline keeps only the latest one expanded
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: number,
+              per_page: 100
+            });
 
-            if (mine) {
-              await github.rest.issues.updateComment({
-                owner, repo,
-                comment_id: mine.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner, repo, issue_number: number, body
-              });
+            for (const comment of comments) {
+              if (!comment.body || !comment.body.includes(marker) || !comment.node_id) continue;
+              try {
+                await github.graphql(
+                  `
+                  mutation($subjectId: ID!) {
+                    minimizeComment(input: { subjectId: $subjectId, classifier: OUTDATED }) {
+                      minimizedComment {
+                        isMinimized
+                      }
+                    }
+                  }
+                  `,
+                  { subjectId: comment.node_id }
+                );
+              } catch (error) {
+                core.warning(`Failed to minimize comment ${comment.id}: ${error.message}`);
+              }
             }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: number,
+              body
+            });
         env:
           BODY: ${{ steps.render.outputs.body }}
 
