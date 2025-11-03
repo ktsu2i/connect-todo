@@ -102,9 +102,9 @@ jobs:
                 "No capability count changes detected."
               else
                 "### Capslock capability diff\n\n" +
-                "| Capability | base | head | Δ |\n|---|---:|---:|---:|\n" +
+                "| Capability | Δ |\n|---|---:|\n" +
                 ([$rows[] | select(.delta!=0)
-                  | "| \(.capability) | \(.base) | \(.head) | " + sign(.delta) + " |"
+                  | "| \(.capability) | " + sign(.delta) + " |"
                  ] | join("\n"))
               end
           ' diff.json > body_part.md
