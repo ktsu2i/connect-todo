@@ -46,15 +46,15 @@ func (h *TodoHandler) GetTodo(
 	ctx context.Context,
 	req *connect.Request[v1.GetTodoRequest],
 ) (*connect.Response[v1.GetTodoResponse], error) {
-	now := timestamppb.New(time.Now())
+	todo, err := h.uc.Todo(req.Msg.GetId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if todo == nil {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("todo not found"))
+	}
 	resp := &v1.GetTodoResponse{
-		Todo: &v1.Todo{
-			Id:        req.Msg.GetId(),
-			Title:     "Dummy todo",
-			Done:      false,
-			CreatedAt: now,
-			UpdatedAt: now,
-		},
+		Todo: todoToProto(todo),
 	}
 	return connect.NewResponse(resp), nil
 }
