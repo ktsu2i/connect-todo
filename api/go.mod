@@ -4,6 +4,7 @@ go 1.24.1
 
 require (
 	connectrpc.com/connect v1.19.1
+	github.com/google/uuid v1.6.0
 	google.golang.org/protobuf v1.36.10
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.0
